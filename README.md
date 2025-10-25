@@ -1,27 +1,39 @@
 # py-feed-reader
 
-An RSS Reader Application
+A personal project to build my own rss reader using feedparser and other python libraries
 
 ## Dependencies
 
-- [reader](https://reader.readthedocs.io/en/latest/)
-- [Flask](https://flask.palletsprojects.com/en/2.3.x/)
-- [rich](https://rich.readthedocs.io/en/stable/introduction.html)
+```txt
+    feedparser==6.0.12
+```
 
-## Feature Roadmap
+## Major Features
 
-1. RESTful API for Interacting with Feeds
-   1. Add Feed
-   2. Remove Feed
-   3. Get Feed Counts
-   4. Get Entries
-   5. Categorize Feeds
-      1. Get Counts by Category
-      2. Get Feeds by Category
-   6. Mark as Read
-2. Basic Web Page Layout
-   1. Basic Look and Feel (Bootstrap? Tailwind?)
-   2. Post layout
-   3. API endpoints to retrieve entries and counts
-   4. Group entries by Category
-   5. Automatically mark as read when scrolling past
+1. Interactive Reader   - IN PROGRESS
+1. Web App              - IN DESIGN
+1. TUI Reader           - UNCOMMITTED
+1. GUI App              - UNCOMMITTED
+
+### 1. Interactive Reader
+
+The goal of this implementation is to build a python object, or objects, that can serve as an interface for an RSS Reader.
+
+#### Core Functions
+
+- Maintain a list of xml feeds and read items for each
+  - Be able to alias those feeds to any name if desired
+  - Be able to browse, filter, and sort the list
+  - Store a local copy of feed item information
+
+### 2. Web App
+
+A basic web application that will serve as a front end over the reader, potentially using flask, FastAPI, or even microdot
+
+### 3. TUI Reader
+
+A CLI-based reader, perhaps using a library like Textual
+
+### 4. GUI App
+
+A GUI application that will serve as a front end over the reader, possibly using FreeSimpleGUI.
