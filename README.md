@@ -6,6 +6,7 @@ A personal project to build my own rss reader using feedparser and other python 
 
 ```txt
     feedparser==6.0.12
+    listparser==0.20
 ```
 
 ## Major Features
