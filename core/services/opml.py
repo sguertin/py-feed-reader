@@ -25,7 +25,7 @@ from core.interfaces.common import ISave
 from core.interfaces.e_tag import IETagService
 from core.interfaces.feed import IFeedService
 from core.models.feed import Feed
-from core.models.settings import Settings
+from core.config.file import FileSettings
 from core.utilities.datetime import utc_timestamp
 from core.utilities.decorators import autosave
 from core.utilities.xml import get_first_element_or_default
@@ -38,7 +38,7 @@ class OPMLFeedService(IFeedService, ISave):
     body: Element
     e_tag_service: IETagService
 
-    def __init__(self, settings: Settings, e_tag_service: IETagService):
+    def __init__(self, settings: FileSettings, e_tag_service: IETagService):
         self.file_path = settings.opml_file_path
         self.e_tag_service = e_tag_service
         self.load(self.file_path)
@@ -63,22 +63,22 @@ class OPMLFeedService(IFeedService, ISave):
             if not disabled(outline)
         ]
 
+    def load_from_string(self, opml_text: str) -> None:
+        self.tree = ET.parse(StringIO(opml_text))
+        self.extract_elements(utc_timestamp())
+
     def load(self, opml_file: Optional[Path] = None) -> None:
+        timestamp = utc_timestamp()
         if opml_file is None:
             opml_file = self.file_path
         else:
             self.file_path = opml_file
-        timestamp = utc_timestamp()
         if opml_file.exists():
             self.tree = ET.parse(opml_file)
+            self.extract_elements(timestamp)
         else:
-            self.tree = ET.parse(StringIO(get_empty_opml(timestamp)))
-        self.head = self.tree.getroot()[0]
-        self.body = self.tree.getroot()[1]
-        get_first_element_or_default(
-            self.head, DATE_MODIFIED, timestamp
-        )  # Don't need the element, just adding them if they're not there
-        get_first_element_or_default(self.head, DATE_CREATED, timestamp)
+            empty_opml = get_empty_opml(timestamp)
+            self.load_from_string(empty_opml)
 
     def save(self, opml_file_path: Optional[Path] = None) -> None:
         if opml_file_path is None:
@@ -89,6 +89,13 @@ class OPMLFeedService(IFeedService, ISave):
         last_modified = get_first_element_or_default(self.head, DATE_MODIFIED)
         last_modified.text = timestamp
         self.tree.write(opml_file_path, encoding="UTF-8", xml_declaration=True)
+
+    def extract_elements(self, timestamp) -> None:
+        self.head = self.tree.getroot()[0]
+        self.body = self.tree.getroot()[1]
+        # Don't need the elements, just adding them if they're not there
+        get_first_element_or_default(self.head, DATE_MODIFIED, timestamp)
+        get_first_element_or_default(self.head, DATE_CREATED, timestamp)
 
     @autosave
     def add_feed(self, feed: Feed) -> None:
@@ -172,27 +179,16 @@ class OPMLFeedService(IFeedService, ISave):
         )
 
 
-# def get_first_element_or_default(
-#     parent: Element, tag: str, text: str= STR_EMPTY, attrib: dict[str, str] | None = None
-# ):
-#     if attrib is None:
-#         attrib = {}
-#     elements = [e for e in parent if e.tag == tag]
-#     if not any(elements):
-#         default_element = SubElement(parent, tag=tag, attrib=attrib, text=text)
-#         return default_element
-#     else:
-#         return elements[0]
-
-
-def get_empty_opml(timestamp: str) -> str:
+def get_empty_opml(
+    timestamp: str, title: str = "RSS Feeds", owner_name: str = STR_EMPTY
+) -> str:
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <opml version="1.0">
     <head>
-        <title>RSS Feeds</title>
+        <title>{title}</title>
         <dateCreated>{timestamp}</dateCreated>
         <dateModified>{timestamp}</dateModified>
-        <ownerName></ownerName>
+        <ownerName>{owner_name}</ownerName>
         <docs>http://opml.org/spec2.opml</docs>
     </head>
     <body>

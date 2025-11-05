@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from core.models.settings import Settings
+from core.config.file import FileSettings
 import core.utilities.file as file
 import core.utilities.json as json
 from core.interfaces.e_tag import IETagService
@@ -17,7 +17,7 @@ class ETagJsonFileService(IETagService):
         self.reload_e_tags()
         return self._e_tags
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: FileSettings):
         self.file_path = Path(settings.e_tag_file_path)
         self.reload_e_tags()
 
