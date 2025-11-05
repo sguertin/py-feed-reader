@@ -22,7 +22,6 @@ from core.constants.opml import (
 )
 from core.exceptions.feed import DuplicateFeedError, FeedNotFoundError
 from core.interfaces.common import ISave
-from core.interfaces.e_tag import IETagService
 from core.interfaces.feed import IFeedService
 from core.models.feed import Feed
 from core.config.file import FileSettings
@@ -36,19 +35,15 @@ class OPMLFeedService(IFeedService, ISave):
     tree: ElementTree[Element[str]]
     head: Element
     body: Element
-    e_tag_service: IETagService
 
-    def __init__(self, settings: FileSettings, e_tag_service: IETagService):
+    def __init__(self, settings: FileSettings):
         self.file_path = settings.opml_file_path
-        self.e_tag_service = e_tag_service
         self.load(self.file_path)
 
     @property
     def disabled_feeds(self) -> list[Feed]:
         return [
-            self.create_feed_from_outline(
-                outline, self.e_tag_service.get_e_tag(outline.attrib[XML_URL])
-            )
+            self.create_feed_from_outline(outline)
             for outline in self.body
             if disabled(outline)
         ]
@@ -56,9 +51,7 @@ class OPMLFeedService(IFeedService, ISave):
     @property
     def feeds(self) -> list[Feed]:
         return [
-            self.create_feed_from_outline(
-                outline, self.e_tag_service.get_e_tag(outline.attrib[XML_URL])
-            )
+            self.create_feed_from_outline(outline)
             for outline in self.body
             if not disabled(outline)
         ]
@@ -168,14 +161,13 @@ class OPMLFeedService(IFeedService, ISave):
         )
 
     @staticmethod
-    def create_feed_from_outline(outline: Element, e_tag: str | None = None) -> Feed:
+    def create_feed_from_outline(outline: Element) -> Feed:
         entry = outline.attrib
         return Feed(
             title=entry.get(TITLE, STR_EMPTY),
             xml_url=entry.get(XML_URL, STR_EMPTY),
             html_url=entry.get(HTML_URL, STR_EMPTY),
             category=entry.get(CATEGORY, STR_EMPTY).replace(SLASH, STR_EMPTY),
-            e_tag=e_tag,
         )
 
 
