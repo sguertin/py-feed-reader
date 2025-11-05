@@ -1,3 +1,2 @@
 feedparser==6.0.12
-listparser==0.20
 rich==14.2.0
