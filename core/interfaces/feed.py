@@ -1,8 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from pathlib import Path
-from typing import Optional
 
-from core.exceptions.opml import DuplicateFeedError, FeedNotFoundError
 from core.models.feed import Feed
 
 
