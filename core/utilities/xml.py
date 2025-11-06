@@ -13,7 +13,8 @@ def get_first_element_or_default(
         attrib = {}
     elements = [e for e in parent if e.tag == tag]
     if not any(elements):
-        default_element = SubElement(parent, tag=tag, attrib=attrib, text=text)
+        default_element = Element(tag, attrib=attrib, text=text)
+        parent.append(default_element)
         return default_element
     else:
         return elements[0]
