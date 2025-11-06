@@ -1,49 +1,43 @@
 from io import StringIO
+import logging
+from logging import Logger
 from pathlib import Path
 from typing import Optional
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, ElementTree
 
-from core.config.common import ConfigurationRoot
+from core.config.common import config
 from core.config.file import FileStorageSettings
-from core.constants.common import SLASH, EMPTY_STRING
-from core.constants.opml import (
-    OUTLINE_TAG,
-    CATEGORY,
-    DISABLED,
-    HTML_URL,
-    RSS,
-    TEXT,
-    TITLE,
-    TYPE,
-    XML_URL,
-    TRUE,
-    FALSE,
-    DATE_CREATED,
-    DATE_MODIFIED,
-)
+import core.constants.common as Constants
+import core.constants.opml as OPML
 from core.exceptions.feed import DuplicateFeedError, FeedNotFoundError
 from core.interfaces.common import ISave
 from core.interfaces.feed import IFeedService
 from core.models.feed import Feed
-from core.utilities.datetime import utcnow_timestamp, DateTime
+from core.utilities.datetime import DateTime
 from core.utilities.decorators import autosave
 from core.utilities.xml import get_first_element_or_default
-
-config = ConfigurationRoot()
 
 
 class OPMLFeedService(IFeedService, ISave):
     tree: ElementTree[Element[str]]
     head: Element
     body: Element
+    log: Logger
 
-    def __init__(self):
+    def __init__(self, settings: FileStorageSettings | None = None):
+        self.log = logging.getLogger(OPMLFeedService.__name__)
+        if settings is not None:
+            self.settings = settings
         self.load(self.file_path)
 
     @property
     def settings(self) -> FileStorageSettings:
         return config.get_config(FileStorageSettings)
+
+    @settings.setter
+    def settings(self, settings: FileStorageSettings) -> None:
+        config.set_config(FileStorageSettings, settings)
 
     @property
     def file_path(self) -> Path:
@@ -79,10 +73,15 @@ class OPMLFeedService(IFeedService, ISave):
             opml_file = self.file_path
         else:
             self.file_path = opml_file
+        file_path_repr = opml_file.as_posix()
         if opml_file.exists():
+            self.log.debug(f"'%s' exists", file_path_repr)
             self.tree = ET.parse(opml_file)
             self.extract_elements(timestamp)
         else:
+            self.log.warning(
+                f"'%s' does not exist, creating empty file", file_path_repr
+            )
             empty_opml = get_empty_opml(timestamp)
             self.load_from_string(empty_opml)
 
@@ -91,8 +90,8 @@ class OPMLFeedService(IFeedService, ISave):
             opml_file = self.file_path
         else:
             self.file_path = opml_file
-        timestamp = utcnow_timestamp()
-        last_modified = get_first_element_or_default(self.head, DATE_MODIFIED)
+        timestamp = DateTime.utcnow_timestamp()
+        last_modified = get_first_element_or_default(self.head, OPML.DATE_MODIFIED)
         last_modified.text = timestamp
         self.tree.write(opml_file, encoding="UTF-8", xml_declaration=True)
 
@@ -100,8 +99,8 @@ class OPMLFeedService(IFeedService, ISave):
         self.head = self.tree.getroot()[0]
         self.body = self.tree.getroot()[1]
         # Don't need the elements, just adding them if they're not there
-        get_first_element_or_default(self.head, DATE_MODIFIED, timestamp)
-        get_first_element_or_default(self.head, DATE_CREATED, timestamp)
+        get_first_element_or_default(self.head, OPML.DATE_MODIFIED, timestamp)
+        get_first_element_or_default(self.head, OPML.DATE_CREATED, timestamp)
 
     @autosave
     def add_feed(self, feed: Feed) -> None:
@@ -113,27 +112,30 @@ class OPMLFeedService(IFeedService, ISave):
         else:
             self.body.append(self.create_element_from_feed(feed))
 
-    def get_feed(self, xml_url: str) -> Feed:
+    def get_feed(self, feed_url: str) -> Feed:
         try:
-            return [feed for feed in self.feeds if feed.url == xml_url][0]
-        except IndexError:
-            raise FeedNotFoundError(xml_url)
+            return [feed for feed in self.feeds if feed.url == feed_url][0]
+        except IndexError as e:
+            raise FeedNotFoundError(feed_url).with_traceback(e.__traceback__)
 
     def get_feed_element(self, xml_url: str) -> Element:
         try:
             return [
-                outline for outline in self.body if outline.attrib[XML_URL] == xml_url
+                outline
+                for outline in self.body
+                if outline.attrib[OPML.XML_URL] == xml_url
             ][0]
-        except IndexError:
-            raise FeedNotFoundError(xml_url)
+        except IndexError as e:
+            self.log.warning(str(e), exc_info=e)
+            raise FeedNotFoundError(xml_url).with_traceback(e.__traceback__)
 
     @autosave
     def disable_feed(self, feed: Feed) -> None:
-        self.get_feed_element(feed.url).set(DISABLED, TRUE)
+        self.get_feed_element(feed.url).set(OPML.DISABLED, OPML.TRUE)
 
     @autosave
     def enable_feed(self, feed: Feed) -> None:
-        self.get_feed_element(feed.url).set(DISABLED, FALSE)
+        self.get_feed_element(feed.url).set(OPML.DISABLED, OPML.FALSE)
 
     def feed_exists(self, feed: Feed) -> bool:
         return any(
@@ -152,24 +154,24 @@ class OPMLFeedService(IFeedService, ISave):
     @autosave
     def update_feed(self, feed_info: Feed) -> None:
         feed_element = self.get_feed_element(feed_info.url)
-        feed_element.set(TEXT, feed_info.title)
-        feed_element.set(TITLE, feed_info.title)
-        feed_element.set(CATEGORY, f"/{feed_info.category}")
-        feed_element.set(XML_URL, feed_info.url)
-        feed_element.set(HTML_URL, feed_info.html_url)
+        feed_element.set(OPML.TEXT, feed_info.title)
+        feed_element.set(OPML.TITLE, feed_info.title)
+        feed_element.set(OPML.CATEGORY, f"/{feed_info.category}")
+        feed_element.set(OPML.XML_URL, feed_info.url)
+        feed_element.set(OPML.HTML_URL, feed_info.html_url)
 
     @staticmethod
     def create_element_from_feed(feed: Feed) -> Element:
         return Element(
-            OUTLINE_TAG,
+            OPML.OUTLINE_TAG,
             attrib={
-                TEXT: feed.title,
-                TITLE: feed.title,
-                TYPE: RSS,
-                CATEGORY: f"{SLASH}{feed.category}",
-                XML_URL: feed.url,
-                HTML_URL: feed.html_url,
-                DISABLED: FALSE,
+                OPML.TEXT: feed.title,
+                OPML.TITLE: feed.title,
+                OPML.TYPE: OPML.RSS,
+                OPML.CATEGORY: f"{Constants.SLASH}{feed.category}",
+                OPML.XML_URL: feed.url,
+                OPML.HTML_URL: feed.html_url,
+                OPML.DISABLED: OPML.FALSE,
             },
         )
 
@@ -177,15 +179,17 @@ class OPMLFeedService(IFeedService, ISave):
     def create_feed_from_outline(outline: Element) -> Feed:
         entry = outline.attrib
         return Feed(
-            title=entry.get(TITLE, EMPTY_STRING),
-            url=entry.get(XML_URL, EMPTY_STRING),
-            html_url=entry.get(HTML_URL, EMPTY_STRING),
-            category=entry.get(CATEGORY, EMPTY_STRING).replace(SLASH, EMPTY_STRING),
+            title=entry.get(OPML.TITLE, Constants.EMPTY_STRING),
+            url=entry.get(OPML.XML_URL, Constants.EMPTY_STRING),
+            html_url=entry.get(OPML.HTML_URL, Constants.EMPTY_STRING),
+            category=entry.get(OPML.CATEGORY, Constants.EMPTY_STRING).replace(
+                Constants.SLASH, Constants.EMPTY_STRING
+            ),
         )
 
 
 def get_empty_opml(
-    timestamp: str, title: str = "RSS Feeds", owner_name: str = EMPTY_STRING
+    timestamp: str, title: str = "RSS Feeds", owner_name: str = Constants.EMPTY_STRING
 ) -> str:
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <opml version="1.0">
@@ -212,4 +216,4 @@ def disabled(outline: Element) -> bool:
     Returns:
         bool: True if the element is disabled
     """
-    return outline.attrib.get(DISABLED, FALSE).lower() == TRUE
+    return outline.attrib.get(OPML.DISABLED, OPML.FALSE).lower() == OPML.TRUE
