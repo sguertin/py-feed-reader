@@ -6,26 +6,16 @@ from core.utilities.path import AppDataFolder
 
 APPLICATION_DIRECTORY = AppDataFolder.get_dir_path()
 SETTINGS_FILE_NAME: str = "file-settings.json"
-ETAGS_FILE_NAME: str = "etags.json"
 ITEM_STORAGE_NAME: str = "feed-items.json"
 OPML_FILE_NAME: str = "feeds.opml"
 
 DEFAULT_SETTINGS_PATH: Path = APPLICATION_DIRECTORY / SETTINGS_FILE_NAME
-DEFAULT_ETAG_PATH: Path = APPLICATION_DIRECTORY / ETAGS_FILE_NAME
 DEFAULT_ITEM_STORAGE_PATH: Path = APPLICATION_DIRECTORY / ITEM_STORAGE_NAME
 DEFAULT_OPML_PATH: Path = APPLICATION_DIRECTORY / OPML_FILE_NAME
 
 
 @dataclass(slots=True)
 class FileStorageSettings(CamelCaseJsonMixin):
-    @property
-    def etag_file_path(self) -> Path:
-        """the path to the etags file"""
-        return Path(self.etag_file)
-
-    @etag_file_path.setter
-    def etag_file_path(self, e_tag_file_path: str | Path) -> None:
-        self.etag_file = str(e_tag_file_path)
 
     @property
     def storage_file_path(self) -> Path:
@@ -33,7 +23,7 @@ class FileStorageSettings(CamelCaseJsonMixin):
         return Path(self.storage_file)
 
     @storage_file_path.setter
-    def storage_file_path(self, storage_file: str | Path):
+    def storage_file_path(self, storage_file: Path | str):
         self.storage_file = str(storage_file)
 
     @property
@@ -55,6 +45,8 @@ class FileStorageSettings(CamelCaseJsonMixin):
         self.opml_file = str(opml_file_path)
 
     file: str = str(DEFAULT_SETTINGS_PATH)
-    etag_file: str = str(DEFAULT_ETAG_PATH)
     storage_file: str = str(DEFAULT_ITEM_STORAGE_PATH)
     opml_file: str = str(DEFAULT_OPML_PATH)
+
+    def __repr__(self) -> str:
+        return f"FileStorageSettings(file_path={self.file_path.as_posix()},storage_file_path={self.storage_file_path.as_posix()},opml_file_path={self.opml_file_path.as_posix()})"

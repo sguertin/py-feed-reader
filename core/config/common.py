@@ -8,7 +8,11 @@ T = TypeVar("T")
 class ConfigurationRoot(metaclass=SingletonMeta):
     _configs: dict[type, Any] = {}
 
-    def get_config(self, config_type: type[T]) -> T:
+    @property
+    def count(self) -> int:
+        return len(self._configs.keys())
+
+    def get_config(self, config_type: type[T], use_default: bool = False) -> T:
         """Retrieves the registered config for the provided config_type
 
         Args:
@@ -17,10 +21,15 @@ class ConfigurationRoot(metaclass=SingletonMeta):
         Returns:
             T: the instance of the config
         """
-        config = self._configs.get(config_type)
-        if config is None:
-            raise ConfigurationNotFoundError(config_type.__name__)
-        return config
+        config = self._configs.get(config_type, None)
+        if config is not None:
+            return config
+        if use_default:
+            default = config_type()
+            self._configs[config_type] = default
+            return default
+        config_type_name = config_type.__name__
+        raise ConfigurationNotFoundError(config_type_name)
 
     def set_config(self, config_type: type[T], config: T) -> None:
         """Registers a config of a specific type
@@ -34,3 +43,12 @@ class ConfigurationRoot(metaclass=SingletonMeta):
     def clear(self) -> None:
         """Remove all registered configurations"""
         self._configs = {}
+
+    def __repr__(self) -> str:
+        configs_text = ",".join([cfg.__name__ for cfg in self._configs.keys()])
+        return (
+            f"ConfigurationRoot(total_configs={self.count}, configs=[{configs_text}])"
+        )
+
+
+config = ConfigurationRoot()
