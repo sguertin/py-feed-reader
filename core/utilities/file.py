@@ -1,9 +1,10 @@
-from datetime import datetime
 import os.path
 from pathlib import Path
 
+from core.utilities.datetime import DateTime
 
-def file_modification_date(file_path: Path) -> datetime:
+
+def file_modification_date(file_path: Path) -> DateTime:
     """Get the last modified date for a given file path
 
     Args:
@@ -11,6 +12,6 @@ def file_modification_date(file_path: Path) -> datetime:
 
     Returns:
         datetime: a datetime object representing the last modified date
-    """    
+    """
     timestamp = os.path.getmtime(str(file_path))
-    return datetime.fromtimestamp(timestamp)
+    return DateTime.fromtimestamp(timestamp)
