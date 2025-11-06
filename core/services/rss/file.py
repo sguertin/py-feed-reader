@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from core.config.common import ConfigurationRoot
@@ -7,11 +8,7 @@ from core.interfaces.rss import IRssStorageService
 from core.models.feed import FeedItem
 from core.utilities.decorators import autosave
 from core.utilities.file import file_modification_date
-from core.utilities.path import AppDataFolder
 from core.utilities.datetime import DateTime
-
-STORAGE_FILE_NAME: str = "rss-storage.json"
-STORAGE_FILE = AppDataFolder.get_dir_path() / STORAGE_FILE_NAME
 
 config = ConfigurationRoot()
 
@@ -29,10 +26,11 @@ class RssReaderStorage(ISave, IRssStorageService):
         return self.settings.storage_file_path
 
     def __init__(self):
+        self.log = logging.getLogger(RssReaderStorage.__name__)
         self.load()
 
     def get_last_modified(self) -> DateTime:
-        return file_modification_date(STORAGE_FILE)
+        return file_modification_date(self.settings.storage_file_path)
 
     def load(self) -> None:
         if not self.file_path.exists():
