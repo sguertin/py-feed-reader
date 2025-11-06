@@ -1,27 +1,26 @@
 import json
-from datetime import datetime
-from utilities.datetime import DateTime
 from typing import Any, Type
 from pathlib import Path
 
 from dataclasses_json import DataClassJsonMixin, LetterCase, config, global_config
 
+from core.utilities.datetime import DateTime
+
 DATACLASSES_JSON = "dataclasses_json"
-
-
-def camel_case(cls: Type[DataClassJsonMixin]) -> Type[DataClassJsonMixin]:
-    cls.dataclass_json_config = config(letter_case=LetterCase.CAMEL)[DATACLASSES_JSON]
-    return cls
 
 
 def to_iso_format(dt: DateTime | Any) -> str:
     return dt.isoformat()
 
 
+def encode_path(path: Path) -> str:
+    return path.as_uri()
+
+
 global_config.encoders[DateTime] = to_iso_format
 global_config.decoders[DateTime] = DateTime.fromisoformat
-global_config.encoders[Path] = str
-global_config.decoders[Path] = Path
+global_config.encoders[Path] = encode_path
+global_config.decoders[Path] = Path.from_uri
 
 
 class CamelCaseJsonMixin(DataClassJsonMixin):
