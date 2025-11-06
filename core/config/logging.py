@@ -9,7 +9,7 @@ MESSAGE_FORMAT: str = (
 )
 
 
-def default_logging_configuration():
+def default_configuration():
     logging.basicConfig(
         level=logging.ERROR,
         format=MESSAGE_FORMAT,
@@ -18,7 +18,7 @@ def default_logging_configuration():
     )
 
 
-def dev_logging_configuration():
+def dev_configuration():
     logging.basicConfig(
         level=logging.NOTSET,
         format=MESSAGE_FORMAT,
