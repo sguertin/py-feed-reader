@@ -1,4 +1,7 @@
-class ConfigurationNotFoundError(Exception):
+from core.exceptions.common import BaseError
+
+
+class ConfigurationNotFoundError(BaseError):
     config_name: str
 
     @property
