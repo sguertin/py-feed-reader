@@ -6,12 +6,14 @@ from core.utilities.path import AppDataFolder
 
 APPLICATION_DIRECTORY = AppDataFolder.get_dir_path()
 SETTINGS_FILE_NAME: str = "file-settings.json"
-ITEM_STORAGE_NAME: str = "feed-items.json"
+JSON_STORAGE_NAME: str = "feed-items.json"
 OPML_FILE_NAME: str = "feeds.opml"
+PICKLE_STORAGE_NAME: str = "feed-items.pickle"
 
 DEFAULT_SETTINGS_PATH: Path = APPLICATION_DIRECTORY / SETTINGS_FILE_NAME
-DEFAULT_ITEM_STORAGE_PATH: Path = APPLICATION_DIRECTORY / ITEM_STORAGE_NAME
+DEFAULT_JSON_STORAGE_PATH: Path = APPLICATION_DIRECTORY / JSON_STORAGE_NAME
 DEFAULT_OPML_PATH: Path = APPLICATION_DIRECTORY / OPML_FILE_NAME
+DEFAULT_PICKLE_STORAGE_PATH: Path = APPLICATION_DIRECTORY / PICKLE_STORAGE_NAME
 
 
 @dataclass(slots=True)
@@ -45,7 +47,7 @@ class FileStorageSettings(CamelCaseJsonMixin):
         self.opml_file = str(opml_file_path)
 
     file: str = str(DEFAULT_SETTINGS_PATH)
-    storage_file: str = str(DEFAULT_ITEM_STORAGE_PATH)
+    storage_file: str = str(DEFAULT_JSON_STORAGE_PATH)
     opml_file: str = str(DEFAULT_OPML_PATH)
 
     def __repr__(self) -> str:

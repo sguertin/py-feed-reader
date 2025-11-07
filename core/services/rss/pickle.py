@@ -57,5 +57,8 @@ class PickleRssStorageService(IRssStorageService, ISave):
         self.file_path.write_bytes(pickle.dumps(self.cache))
 
     def load(self) -> list[FeedItem]:
-        self.cache = pickle.loads(self.file_path.read_bytes(), encoding="UTF-8")
+        if not self.file_path.exists():
+            self.cache = []
+        else:
+            self.cache = pickle.loads(self.file_path.read_bytes(), encoding="UTF-8")
         return self.cache

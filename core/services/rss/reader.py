@@ -18,14 +18,23 @@ PUBLISHED = "published"
 TITLE = "title"
 STATUS = "status"
 SUMMARY = "summary"
+IMAGE = "image"
+IMAGES = "media_thumbnail"
+URL = "url"
+HREF = "href"
 
 
-def create_feed_item_from_entry(entry: dict, feed_url: str) -> FeedItem:
+def create_feed_item_from_entry(entry: dict[str, Any], feed_url: str) -> FeedItem:
     return FeedItem(
-        id=entry[ID],
+        id=entry.get(ID, entry.get(LINK, EMPTY_STRING)),
         title=entry.get(TITLE),
         summary=entry.get(SUMMARY),
         link=entry.get(LINK),
+        images=[
+            image.get(URL, EMPTY_STRING)
+            for image in entry.get(IMAGES, [])
+            if image.get(URL, EMPTY_STRING) != EMPTY_STRING
+        ],
         published=DateTime.parse_timestamp(entry.get(PUBLISHED)),
         feed_url=feed_url,
         created=DateTime.now(),
@@ -36,6 +45,7 @@ def create_feed_from_rss(feed: dict, feed_url: str) -> Feed:
     return Feed(
         title=feed.get(TITLE, EMPTY_STRING),
         url=feed_url,
+        image=feed.get(IMAGE, dict()).get(HREF, None),
         html_url=feed.get(LINK, EMPTY_STRING),
         category=EMPTY_STRING,
         created=DateTime.now(),
@@ -65,7 +75,7 @@ class RssFeedReaderService:
                 for item in self._get_feed_items(feed)
                 if item.id not in stored_ids and (item.read == False or include_read)
             ]
-        return []
+        return stored_items
 
     def get_feed_items(self, feed: Feed, include_read: bool = False) -> list[FeedItem]:
         stored_items = [

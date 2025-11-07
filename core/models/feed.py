@@ -11,6 +11,8 @@ class Feed(CamelCaseJsonMixin):
     url: str
     html_url: str
     category: str
+    favicon: str = EMPTY_STRING
+    image: str | None = None
     etag: str | None = None
     modified: str | None = None
     last_read: DateTime | None = None
@@ -25,6 +27,7 @@ class FeedItem(CamelCaseJsonMixin):
     id: str
     title: str | None = None
     summary: str | None = None
+    images: list[str] | None = None
     link: str | None = None
     published: DateTime | None = None
     feed_url: str = EMPTY_STRING
@@ -37,6 +40,7 @@ class FeedItem(CamelCaseJsonMixin):
     def update(self, other: FeedItem) -> None:
         self.title = other.title
         self.summary = other.summary
+        self.images = other.images
         self.link = other.link
         self.published = other.published
         self.feed_url = other.feed_url
