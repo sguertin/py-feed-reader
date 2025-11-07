@@ -46,4 +46,4 @@ class DateTime(datetime):
         return self.isoformat()
 
     def __repr__(self) -> str:
-        return f"DateTime(year={self.year},month={self.month},day={self.day}, hour={self.hour}, minute={self.minute}, second={self.second})"
+        return f"{self.__class__.__name__}(year={self.year},month={self.month},day={self.day}, hour={self.hour}, minute={self.minute}, second={self.second})"

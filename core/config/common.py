@@ -46,9 +46,7 @@ class ConfigurationRoot(metaclass=SingletonMeta):
 
     def __repr__(self) -> str:
         configs_text = ",".join([cfg.__name__ for cfg in self._configs.keys()])
-        return (
-            f"ConfigurationRoot(total_configs={self.count}, configs=[{configs_text}])"
-        )
+        return f"{self.__class__.__name__}(total_configs={self.count}, configs=[{configs_text}])"
 
 
 config = ConfigurationRoot()

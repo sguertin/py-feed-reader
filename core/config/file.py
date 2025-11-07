@@ -51,4 +51,4 @@ class FileStorageSettings(CamelCaseJsonMixin):
     opml_file: str = str(DEFAULT_OPML_PATH)
 
     def __repr__(self) -> str:
-        return f"FileStorageSettings(file_path={self.file_path.as_posix()},storage_file_path={self.storage_file_path.as_posix()},opml_file_path={self.opml_file_path.as_posix()})"
+        return f'{self.__class__.__name__}(file_path="{self.file_path.as_posix()}",storage_file_path="{self.storage_file_path.as_posix()}",opml_file_path="{self.opml_file_path.as_posix()}")'

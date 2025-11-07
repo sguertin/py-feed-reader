@@ -12,7 +12,7 @@ class BaseError(Exception, ABC, metaclass=ABCMeta):
         return self.message
 
     def __repr__(self) -> str:
-        return f"{self.__name__}('{self.message}')"
+        return f"{self.__class__.__name__}('{self.message}')"
 
 
 class ApplicationError(BaseError):

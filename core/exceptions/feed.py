@@ -14,7 +14,7 @@ class FeedNotFoundError(BaseError):
         return f"'{self.xml_url}' was not found!"
 
     def __repr__(self) -> str:
-        return f"FeedNotFoundError(xml_url='{self.xml_url}')"
+        return f"{self.__class__.__name__}(xml_url='{self.xml_url}')"
 
 
 class DuplicateFeedError(BaseError):
@@ -32,4 +32,4 @@ class DuplicateFeedError(BaseError):
         return self.message
 
     def __repr__(self) -> str:
-        return f"DuplicateFeedError(feed_url='{self.feed_url}')"
+        return f"{self.__class__.__name__}(feed_url='{self.feed_url}')"
